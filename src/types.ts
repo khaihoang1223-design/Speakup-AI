@@ -1,14 +1,8 @@
-export type ScenarioId = 
-  | 'make-friends'
-  | 'group-work'
-  | 'disagree-politely'
-  | 'apologize'
-  | 'refuse-politely';
-
 export interface Scenario {
-  id: ScenarioId;
+  id: string;
   title: string;
   category: string;
+  categoryTag: 'friends' | 'team' | 'discussion' | 'apology' | 'refusal' | 'teacher';
   partnerName: string;
   partnerRole: string;
   partnerAvatar: string;
@@ -27,5 +21,13 @@ export interface AIFeedback {
   strengths: string;
   improvements: string;
   shortSuggestion: string;
+  alternativeSuggestion?: string;
   followUpDialogue: string;
+}
+
+export interface ChatMessage {
+  sender: 'partner' | 'student';
+  text: string;
+  feedback?: AIFeedback;
+  timestamp?: string;
 }

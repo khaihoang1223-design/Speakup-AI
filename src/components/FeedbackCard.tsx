@@ -94,16 +94,47 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({
         </div>
       </div>
 
-      {/* Short Suggestion */}
-      <div className="bg-gradient-to-r from-[#101b44] via-[#0d1637] to-[#09102b] border border-cyan-500/35 text-white rounded-xl p-4 shadow-[0_0_20px_rgba(56,189,248,0.15)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-        <span className="text-[11px] font-semibold tracking-wider uppercase text-cyan-300 flex items-center gap-1.5 mb-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Một gợi ý ngắn cho em</span>
-        </span>
-        <p className="text-sm text-cyan-100 font-medium italic leading-relaxed relative z-10">
-          "{feedback.shortSuggestion}"
-        </p>
+      {/* Suggestions Section - Multi-style alternatives */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold tracking-wider uppercase text-cyan-300 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Mẫu câu nói gợi ý cho em</span>
+          </span>
+          <span className="text-[11px] text-sky-400/80">Chọn phong cách phù hợp với em</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Style 1: Natural & Friendly */}
+          <div className="bg-gradient-to-br from-[#101b44] to-[#09102b] border border-cyan-500/35 text-white rounded-xl p-4 shadow-[0_0_15px_rgba(56,189,248,0.12)]">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-cyan-300 flex items-center gap-1">
+                <span>🌱 Phong cách gần gũi, tự nhiên</span>
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm text-cyan-100 font-medium leading-relaxed">
+              {feedback.shortSuggestion.startsWith('“') || feedback.shortSuggestion.startsWith('"')
+                ? feedback.shortSuggestion
+                : `"${feedback.shortSuggestion}"`}
+            </p>
+          </div>
+
+          {/* Style 2: Polite, Confident & Thoughtful */}
+          {feedback.alternativeSuggestion && (
+            <div className="bg-gradient-to-br from-[#121c45] to-[#0b1233] border border-indigo-500/35 text-white rounded-xl p-4 shadow-[0_0_15px_rgba(99,102,241,0.12)]">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold text-indigo-300 flex items-center gap-1">
+                  <span>✨ Phong cách chững chạc, lịch thiệp</span>
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-indigo-100 font-medium leading-relaxed">
+                {feedback.alternativeSuggestion.startsWith('“') || feedback.alternativeSuggestion.startsWith('"')
+                  ? feedback.alternativeSuggestion
+                  : `"${feedback.alternativeSuggestion}"`}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Follow-up Dialogue line to continue conversation */}
