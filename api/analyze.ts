@@ -1,19 +1,5 @@
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { GoogleGenAI, Type } from "@google/genai";
-import dotenv from "dotenv";
-import { evaluateResponse } from "./src/data/evaluator";
-
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = 3000;
-
-app.use(express.json());
+import { GoogleGenAI } from "@google/genai";
+import { evaluateResponse } from "../src/data/evaluator";
 
 let aiClient: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI | null {
@@ -25,34 +11,47 @@ function getAiClient(): GoogleGenAI | null {
   return aiClient;
 }
 
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY)
-  });
-});
+export default async function handler(req: any, res: any) {
+  // Support CORS for flexibility
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-// Communication evaluation endpoint
-app.post("/api/analyze", async (req, res) => {
-  const {
-    scenarioTitle,
-    partnerName,
-    partnerRole,
-    contextDescription,
-    contextPrompt,
-    studentResponse
-  } = req.body;
-
-  if (!studentResponse || typeof studentResponse !== "string" || !studentResponse.trim()) {
-    return res.status(400).json({ error: "Vui lòng nhập câu trả lời của học sinh." });
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
 
-  // If Gemini API is available, call gemini-3.8-flash
-  const ai = getAiClient();
-  if (ai) {
-    try {
-      const prompt = `
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    let body = req.body;
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        // keep as is
+      }
+    }
+
+    const {
+      scenarioTitle,
+      partnerName,
+      partnerRole,
+      contextDescription,
+      contextPrompt,
+      studentResponse
+    } = body || {};
+
+    if (!studentResponse || typeof studentResponse !== "string" || !studentResponse.trim()) {
+      return res.status(400).json({ error: "Vui lòng nhập câu trả lời của học sinh." });
+    }
+
+    const ai = getAiClient();
+    if (ai) {
+      try {
+        const prompt = `
 Bạn là chuyên gia sư phạm tâm lý giáo dục giao tiếp thân thiện, ân cần dành riêng cho học sinh Trung học Cơ sở (THCS, độ tuổi 11 - 15 tuổi) tại Việt Nam, mang tên SpeakUp AI.
 
 BỐI CẢNH TÌNH HUỐNG:
@@ -99,54 +98,35 @@ YÊU CẦU TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SAU (không dùng markdown code
 }
 `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.6
+        const modelName = "gemini-2.5-flash";
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            temperature: 0.6
+          }
+        });
+
+        const responseText = response.text;
+        if (responseText) {
+          const parsed = JSON.parse(responseText);
+          return res.status(200).json(parsed);
         }
-      });
-
-      const responseText = response.text;
-      if (responseText) {
-        const parsed = JSON.parse(responseText);
-        return res.json(parsed);
+      } catch (apiError) {
+        console.error("Gemini API call on Vercel error, fallback to rule engine:", apiError);
       }
-    } catch (apiError) {
-      console.error("Gemini API call failed, using intelligent fallback:", apiError);
     }
+
+    // Fallback if key is not yet added in Vercel settings or API limits
+    const fallbackData = evaluateResponse(
+      scenarioTitle || "Giao tiếp học đường",
+      partnerName || "Bạn học",
+      studentResponse
+    );
+    return res.status(200).json(fallbackData);
+  } catch (error) {
+    console.error("Handler error:", error);
+    return res.status(500).json({ error: "Lỗi xử lý yêu cầu phân tích." });
   }
-
-  // Fallback if no API key or call failed
-  const fallback = evaluateResponse(
-    scenarioTitle || "Tình huống giao tiếp",
-    partnerName || "bạn",
-    studentResponse
-  );
-  return res.json(fallback);
-});
-
-// Setup Vite middleware in dev or serve static files in production
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa"
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`SpeakUp AI server running on http://localhost:${PORT}`);
-  });
 }
-
-startServer();

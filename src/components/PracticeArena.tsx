@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Scenario, AIFeedback } from '../types';
 import { SCENARIOS } from '../data/scenarios';
+import { evaluateResponse } from '../data/evaluator';
 import { ScenarioCard } from './ScenarioCard';
 import { FeedbackCard } from './FeedbackCard';
 import { Send, Sparkles, RefreshCw, Info, MessageSquare } from 'lucide-react';
@@ -52,15 +53,27 @@ export const PracticeArena: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Không thể kết nối đến máy chủ AI');
+        throw new Error('API server returned error status: ' + res.status);
       }
 
       const feedbackData: AIFeedback = await res.json();
       setSubmittedResponse(responseToSend);
       setCurrentFeedback(feedbackData);
     } catch (err) {
-      console.error('Analysis error:', err);
-      setErrorMsg('Đã có lỗi khi kết nối AI, em hãy thử bấm gửi lại nhé.');
+      console.warn('Analysis via server endpoint failed, activating fallback evaluator:', err);
+      // Seamless fallback so students always receive prompt, pedagogical feedback
+      try {
+        const fallbackData = evaluateResponse(
+          selectedScenario.title,
+          selectedScenario.partnerName,
+          responseToSend
+        );
+        setSubmittedResponse(responseToSend);
+        setCurrentFeedback(fallbackData);
+      } catch (fallbackErr) {
+        console.error('Fallback error:', fallbackErr);
+        setErrorMsg('Đã có lỗi xảy ra, em hãy thử bấm gửi lại nhé.');
+      }
     } finally {
       setIsAnalyzing(false);
     }
