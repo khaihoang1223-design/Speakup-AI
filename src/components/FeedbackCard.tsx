@@ -1,0 +1,140 @@
+import React from 'react';
+import { AIFeedback } from '../types';
+import { CheckCircle2, Lightbulb, MessageSquare, Sparkles, ArrowRight, RotateCcw, Star } from 'lucide-react';
+
+interface FeedbackCardProps {
+  feedback: AIFeedback;
+  partnerName: string;
+  onContinueChat: (nextPrompt: string) => void;
+  onRetry: () => void;
+}
+
+export const FeedbackCard: React.FC<FeedbackCardProps> = ({
+  feedback,
+  partnerName,
+  onContinueChat,
+  onRetry
+}) => {
+  const getScoreBadgeClass = (score: string) => {
+    switch (score) {
+      case 'Rất tốt':
+        return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.2)]';
+      case 'Khá tốt':
+        return 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(34,211,238,0.2)]';
+      default:
+        return 'bg-amber-950/80 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(251,191,36,0.2)]';
+    }
+  };
+
+  return (
+    <div id="ai-feedback-section" className="bg-[#0b1330]/90 backdrop-blur-md rounded-2xl border border-sky-500/30 p-5 sm:p-6 space-y-6 shadow-[0_4px_30px_rgba(2,6,23,0.7)]">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-sky-500/20">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-500 text-white flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white text-base flex items-center gap-2">
+              <span>Nhận xét từ SpeakUp AI</span>
+              <span className="text-xs text-cyan-400">✦</span>
+            </h3>
+            <p className="text-xs text-sky-300/80">Đánh giá câu trả lời theo 3 tiêu chí cốt lõi</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Criteria Evaluation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {feedback.criteria.map((item, idx) => (
+          <div
+            key={idx}
+            className="p-3.5 rounded-xl bg-[#070e26]/85 border border-sky-500/25 flex flex-col justify-between hover:border-sky-400/40 transition-colors"
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-semibold text-white flex items-center gap-1.5">
+                <Star className="w-3 h-3 text-cyan-400 fill-cyan-400/30" />
+                {item.name}
+              </span>
+              <span
+                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${getScoreBadgeClass(
+                  item.score
+                )}`}
+              >
+                {item.score}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Strengths & Improvements */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Strengths */}
+        <div className="bg-emerald-950/35 border border-emerald-500/35 rounded-xl p-4 shadow-[0_0_15px_rgba(16,185,129,0.08)]">
+          <div className="flex items-center gap-2 text-emerald-300 font-semibold text-sm mb-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Điểm em làm tốt</span>
+          </div>
+          <p className="text-xs text-emerald-100/90 leading-relaxed">
+            {feedback.strengths}
+          </p>
+        </div>
+
+        {/* Improvements */}
+        <div className="bg-amber-950/35 border border-amber-500/35 rounded-xl p-4 shadow-[0_0_15px_rgba(245,158,11,0.08)]">
+          <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm mb-1.5">
+            <Lightbulb className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Điểm em có thể cải thiện</span>
+          </div>
+          <p className="text-xs text-amber-100/90 leading-relaxed">
+            {feedback.improvements}
+          </p>
+        </div>
+      </div>
+
+      {/* Short Suggestion */}
+      <div className="bg-gradient-to-r from-[#101b44] via-[#0d1637] to-[#09102b] border border-cyan-500/35 text-white rounded-xl p-4 shadow-[0_0_20px_rgba(56,189,248,0.15)] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+        <span className="text-[11px] font-semibold tracking-wider uppercase text-cyan-300 flex items-center gap-1.5 mb-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Một gợi ý ngắn cho em</span>
+        </span>
+        <p className="text-sm text-cyan-100 font-medium italic leading-relaxed relative z-10">
+          "{feedback.shortSuggestion}"
+        </p>
+      </div>
+
+      {/* Follow-up Dialogue line to continue conversation */}
+      <div className="bg-[#070e26]/90 border border-sky-500/25 rounded-xl p-4">
+        <div className="flex items-center gap-2 text-sky-200 font-semibold text-sm mb-1.5">
+          <MessageSquare className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span>Câu tiếp theo của {partnerName}</span>
+        </div>
+        <p className="text-sm text-slate-200 italic mb-4 font-medium">
+          "{feedback.followUpDialogue}"
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-sky-500/20">
+          <button
+            id="continue-dialogue-btn"
+            onClick={() => onContinueChat(feedback.followUpDialogue)}
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-sky-500 via-indigo-600 to-blue-600 hover:from-sky-400 hover:to-indigo-500 text-white transition-all duration-200 flex items-center gap-1.5 shadow-[0_0_15px_rgba(56,189,248,0.35)] cursor-pointer"
+          >
+            <span>Tiếp tục trò chuyện với câu này</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            id="retry-response-btn"
+            onClick={onRetry}
+            className="px-4 py-2 text-xs font-medium rounded-lg bg-[#111c40] hover:bg-[#182859] border border-sky-400/30 text-sky-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Thử trả lời lại câu trước</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
